@@ -31,4 +31,3 @@ The files in this repository are released under the [MIT license](https://gitlab
 
 **observe**  
 Trivy uses vulnerability information from a variety of sources, some of which are licensed for non-commercial use only.  
- 
