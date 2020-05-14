@@ -5,6 +5,7 @@ stages:
   #- scan
 
 download:
+  stage: download
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   variables:
     GIT_STRATEGY: none
@@ -19,6 +20,7 @@ download:
     expire_in: 1 hour
 
 .build:
+  stage: build
   needs:
     - download
   image: registry.gitlab.com/jitesoft/dockerfiles/go:latest
@@ -32,26 +34,27 @@ download:
       - trivy-${ARCH}
       - version.txt
     expire_in: 1 hour
+
+build:arm:
+  extends: .build
+  variables:
+    GIT_STRATEGY: "none"
+    GO111MODULE: "on"
+    ARCH: "arm64"
   tags:
     - arm64
 
-build:arm:
-  variables:
-    GIT_STRATEGY: none
-    GO111MODULE: on
-    ARCH: arm64
-  extends: .build
-
 build:amd:
-  variables:
-    GIT_STRATEGY: none
-    GO111MODULE: on
-    ARCH: amd64
   extends: .build
+  variables:
+    GIT_STRATEGY: "none"
+    GO111MODULE: "on"
+    ARCH: "amd64"
   tags:
     - amd64
 
 containerize:
+  stage: containerize
   needs:
     - build:arm
     - build:amd
