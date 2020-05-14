@@ -25,6 +25,7 @@ download:
     - download
   image: registry.gitlab.com/jitesoft/dockerfiles/go:latest
   script:
+    - apk add --no-cache gcc
     - mkdir -p ${GOPATH}/src/github.com/aquasecurity/trivy
     - tar -xzf trivy.tar.gz --strip-components=1 -C "${GOPATH}/src/github.com/aquasecurity/trivy"
     - cd ${GOPATH}/src/github.com/aquasecurity/trivy
