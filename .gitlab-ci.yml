@@ -1,0 +1,67 @@
+stages:
+  - download
+  - build
+  - containerize
+  #- scan
+
+download:
+  image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - VERSION=$(wget -qO- https://github.com/aquasecurity/trivy/releases | grep -oP '(?<=releases\/tag\/)(.*?)(?=\">)' | awk 'NR==1{print $1}' | head -1)
+    - curl -SsL https://github.com/aquasecurity/trivy/archive/${VERSION}.tar.gz -o trivy.tar.gz
+    - echo "${VERSION#?}" > version.txt
+  artifacts:
+    paths:
+      - version.txt
+      - trivy.tar.gz
+    expire_in: 1 hour
+
+.build:
+  needs:
+    - download
+  image: registry.gitlab.com/jitesoft/dockerfiles/go:latest
+  script:
+    - mkdir src
+    - tar -xzf trivy.tar.gz --strip-components=1 -C src/
+    - go build  -v -a -ldflags "-linkmode external -extldflags '-static' -s -w" src/cmd/trivy
+    - mv trivy trivy-${ARCH}
+  artifacts:
+    paths:
+      - trivy-${ARCH}
+      - version.txt
+    expire_in: 1 hour
+  tags:
+    - arm64
+
+build:arm:
+  variables:
+    GIT_STRATEGY: none
+    GO111MODULE: on
+    ARCH: arm64
+  extends: .build
+
+build:amd:
+  variables:
+    GIT_STRATEGY: none
+    GO111MODULE: on
+    ARCH: amd64
+  extends: .build
+  tags:
+    - amd64
+
+containerize:
+  needs:
+    - build:arm
+    - build:amd
+  image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
+  script:
+    - mkdir binaries
+    - mv trivy-* binaries/
+    - mv entrypoint binaries/
+    - TAGLIST=$(helper "${CI_REGISTRY_IMAGE}" "latest,${VERSION}"
+    - docker buildx build ${TAGLIST} --progress=plain --platform=linux/amd64,linux/arm64 --build-arg VERSION=$(cat version.txt) --push .
+  tags:
+    - buildx
+    - protected
