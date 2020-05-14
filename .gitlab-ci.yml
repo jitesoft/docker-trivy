@@ -42,7 +42,7 @@ build:arm:
     GO111MODULE: "on"
     ARCH: "arm64"
   tags:
-    - arm64
+    - native-arm64
 
 build:amd:
   extends: .build
@@ -51,7 +51,7 @@ build:amd:
     GO111MODULE: "on"
     ARCH: "amd64"
   tags:
-    - amd64
+    - native-amd64
 
 containerize:
   stage: containerize
