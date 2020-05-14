@@ -23,5 +23,6 @@ RUN --mount=type=bind,source=./binaries,target=/tmp/bin \
  && addgroup -g 133 -S trivy \
  && adduser -u 133 -D -S -G trivy trivy
 
+USER trivy
 ENTRYPOINT ["entrypoint"]
 CMD ["--help"]
