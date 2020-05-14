@@ -25,9 +25,8 @@ download:
     - download
   image: registry.gitlab.com/jitesoft/dockerfiles/go:latest
   script:
-    - mkdir src
-    - tar -xzf trivy.tar.gz --strip-components=1 -C src/
-    - go build  -v -a -ldflags "-linkmode external -extldflags '-static' -s -w" src/cmd/trivy
+    - tar -xzf trivy.tar.gz --strip-components=1 -C "${GOPATH}/src/github.com/aquasecurity/trivy"
+    - go build  -v -a -ldflags "-linkmode external -extldflags '-static' -s -w" github.com/aquasecurity/cmd/trivy
     - mv trivy trivy-${ARCH}
   artifacts:
     paths:
