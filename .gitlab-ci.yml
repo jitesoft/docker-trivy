@@ -30,7 +30,7 @@ download:
     - tar -xzf trivy.tar.gz --strip-components=1 -C "${GOPATH}/src/github.com/aquasecurity/trivy"
     - cd ${GOPATH}/src/github.com/aquasecurity/trivy
     - go mod download
-    - go build -v -a -ldflags "-linkmode external -extldflags '-static' -s -w" cmd/trivy/main.go
+    - go build -v -a -ldflags "-s -w -X=main.version=v$(cat version.txt)" ./cmd/trivy
     - mv trivy ${CI_PROJECT_DIR}/trivy-${ARCH}
   artifacts:
     paths:
