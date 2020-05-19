@@ -19,7 +19,10 @@ RUN --mount=type=bind,source=./binaries,target=/tmp/bin \
  && chmod +x /usr/local/bin/trivy \
  && chmod +x /usr/local/bin/entrypoint \
  && mkdir -p /contrib \
- && wget https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab.tpl > /contrib/gitlab.tpl
+ && wget https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab.tpl > /contrib/gitlab.tpl \
+ && addgroup -g 1021 -S trivy \
+ && adduser -u 1021 -D -S -G trivy trivy
 
+USER trivy
 ENTRYPOINT ["entrypoint"]
 CMD ["--help"]
