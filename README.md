@@ -13,12 +13,12 @@ Check tags in registry for up to date tags.
 ### DockerHub
 
 * `jitesoft/trivy`
-    * `0.7.0`, `latest`
+    * `0.8.0`, `latest`
 
 ### GitLab
 
 * `registry.gitlab.com/jitesoft/dockerfiles/trivy`
-    * `0.7.0`, `latest`
+    * `0.8.0`, `latest`
 
 ## Image labels
 
