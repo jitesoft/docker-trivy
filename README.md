@@ -31,3 +31,17 @@ The files in this repository are released under the [MIT license](https://gitlab
 
 **observe**  
 Trivy uses vulnerability information from a variety of sources, some of which are licensed for non-commercial use only.  
+
+
+## GitLab scan
+
+The gitlab-scan.yml is a convinience scan template to use Trivy for dependency scanning in gitlab ci as an include:
+
+```yaml
+include:
+  - file: /gitlab-scan.yml
+    project: jitesoft/dockerfiles
+
+scan:
+    extends: .container_scanning
+```
