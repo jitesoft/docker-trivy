@@ -66,7 +66,9 @@ containerize:
     - build:amd
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   script:
+    - wget https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab.tpl
     - mkdir binaries
+    - mv gitlab.tpl binaries/
     - mv trivy-* binaries/
     - mv entrypoint binaries/
     - TAGLIST=$(helper "${CI_REGISTRY_IMAGE},jitesoft/trivy" "latest,$(cat version.txt)")
@@ -83,5 +85,6 @@ scan:
     - apk add --no-cache wget grep
     - VERSION=$(wget -qO- https://github.com/aquasecurity/trivy/releases | grep -oP '(?<=releases\/tag\/)(.*?)(?=\">)' | awk 'NR==1{print $1}' | head -1)
     - export SCANNING_IMAGE_NAME="${CI_REGISTRY_IMAGE}:${VERSION#?}"
+    - trivy version
   variables:
     GIT_STRATEGY: none
