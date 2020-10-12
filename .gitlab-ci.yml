@@ -13,7 +13,8 @@ download:
   variables:
     GIT_STRATEGY: none
   script:
-    - VERSION=$(wget -qO- https://github.com/aquasecurity/trivy/releases | grep -oP '(?<=releases\/tag\/)(.*?)(?=\">)' | awk 'NR==1{print $1}' | head -1)
+    - apk add --no-cache jq
+    - VERSION=$(wget -qO- https://api.github.com/repos/aquasecurity/trivy/releases | jq -r ".[0].tag_name")
     - curl -SsL https://github.com/aquasecurity/trivy/archive/${VERSION}.tar.gz -o trivy.tar.gz
     - echo "${VERSION#?}" > version.txt
   artifacts:
@@ -87,6 +88,6 @@ scan:
     - apk add --no-cache wget grep
     - VERSION=$(wget -qO- https://github.com/aquasecurity/trivy/releases | grep -oP '(?<=releases\/tag\/)(.*?)(?=\">)' | awk 'NR==1{print $1}' | head -1)
     - export SCANNING_IMAGE_NAME="${CI_REGISTRY_IMAGE}:${VERSION#?}"
-    - trivy version
+    - trivy --version
   variables:
     GIT_STRATEGY: none
