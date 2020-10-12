@@ -74,7 +74,7 @@ containerize:
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/asff.tpl -o binaries/contrib/asff.tpl
     - mv trivy-* binaries/
     - mv entrypoint binaries/
-    - TAGLIST=$(helper "${CI_REGISTRY_IMAGE},jitesoft/trivy" "latest,$(cat version.txt)")
+    - TAGLIST=$(helper "${CI_REGISTRY_IMAGE},jitesoft/trivy,ghcr.io/jitesoft/trivy" "latest,$(cat version.txt)")
     - docker buildx build ${TAGLIST} --progress=plain --platform=linux/amd64,linux/arm64 --build-arg VERSION=$(cat version.txt) --push .
   tags:
     - buildx
