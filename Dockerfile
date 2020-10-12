@@ -16,7 +16,7 @@ RUN --mount=type=bind,source=./binaries,target=/tmp/bin \
     cp /tmp/bin/trivy-${TARGETARCH} /usr/local/bin/trivy \
  && cp /tmp/bin/entrypoint /usr/local/bin/ \
  && mkdir -p /contrib \
- && cp /tmp/bin/gitlab.tpl /contrib/gitlab.tpl \
+ && cp /tmp/bin/contrib/*.tpl /contrib/ \
  && apk add --no-cache ca-certificates git rpm \
  && chmod +x /usr/local/bin/trivy \
  && chmod +x /usr/local/bin/entrypoint

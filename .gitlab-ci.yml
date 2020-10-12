@@ -66,8 +66,11 @@ containerize:
     - build:amd
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   script:
-    - wget https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab.tpl
-    - mkdir binaries
+    - mkdir -p binaries/contrib
+    - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab.tpl -o binaries/contrib/gitlab.tpl
+    - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/sarif.tpl -o binaries/contrib/sarif.tpl
+    - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/junit.tpl -o binaries/contrib/junit.tpl
+    - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/asff.tpl -o binaries/contrib/asff.tpl
     - mv gitlab.tpl binaries/
     - mv trivy-* binaries/
     - mv entrypoint binaries/
