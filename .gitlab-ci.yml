@@ -71,7 +71,6 @@ containerize:
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/sarif.tpl -o binaries/contrib/sarif.tpl
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/junit.tpl -o binaries/contrib/junit.tpl
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/asff.tpl -o binaries/contrib/asff.tpl
-    - mv gitlab.tpl binaries/
     - mv trivy-* binaries/
     - mv entrypoint binaries/
     - TAGLIST=$(helper "${CI_REGISTRY_IMAGE},jitesoft/trivy" "latest,$(cat version.txt)")
