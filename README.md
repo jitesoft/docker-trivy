@@ -32,16 +32,23 @@ The files in this repository are released under the [MIT license](https://gitlab
 **observe**  
 Trivy uses vulnerability information from a variety of sources, some of which are licensed for non-commercial use only.  
 
+## Sponsors
 
-## GitLab scan
+Sponsoring is vital for the further development and maintaining of open source projects.  
+Questions and sponsoring queries can be made via <a href="mailto:sponsor@jitesoft.com">email</a>.  
+If you wish to sponsor our projects, reach out to the email above or visit any of the following sites:
 
-The gitlab-scan.yml is a convinience scan template to use Trivy for dependency scanning in gitlab ci as an include:
+[Open Collective](https://opencollective.com/jitesoft-open-source)  
+[GitHub Sponsors](https://github.com/sponsors/jitesoft)  
+[Patreon](https://www.patreon.com/jitesoft)
 
-```yaml
-include:
-  - file: /gitlab-scan.yml
-    project: jitesoft/dockerfiles
+Jitesoft images are built via GitLab CI on runners hosted by the following wonderful organisations:
 
-scan:
-    extends: .container_scanning
-```
+<a href="https://www.linaro.org/">
+  <img src="https://raw.githubusercontent.com/jitesoft/misc/master/sponsors/linaro.png" width="256" alt="Linaro logo" />
+</a>
+<a href="https://fosshost.org/">
+  <img src="https://raw.githubusercontent.com/jitesoft/misc/master/sponsors/fosshost.png" width="256" alt="Fosshost logo" />
+</a>
+
+_The companies above are not affiliated with Jitesoft or any Jitesoft Projects directly._
