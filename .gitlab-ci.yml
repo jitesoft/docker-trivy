@@ -42,6 +42,8 @@ build:
     - go mod download
     - go build -v -a -ldflags "-s -w -X=main.version=v${TRIVY_VERSION}" ./cmd/trivy
     - mv trivy ${CI_PROJECT_DIR}/trivy-${ARCH}
+  tags:
+    - native-amd64
   artifacts:
     paths:
       - trivy-${ARCH}
