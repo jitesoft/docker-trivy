@@ -1,9 +1,8 @@
 # Trivy
 
 Docker image with alpine linux and [Trivy](https://github.com/aquasecurity/trivy) for container scanning.  
-Includes template for gitlab-ci dependency scanning output.
 
-Images are buildt automatically from source for AMD64 and Aarch64.
+Images are built automatically from source for AMD64 and Aarch64.
 
 ## Tags
 
@@ -13,12 +12,12 @@ Check tags in registry for up to date tags.
 ### DockerHub
 
 * `jitesoft/trivy`
-    * `0.8.0`, `latest`
+    * `0.19.2`, `latest`
 
 ### GitLab
 
 * `registry.gitlab.com/jitesoft/dockerfiles/trivy`
-    * `0.8.0`, `latest`
+    * `0.19.2`, `latest`
 
 ## Image labels
 

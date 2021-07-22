@@ -23,18 +23,24 @@ download:
       - trivy.tar.gz
     expire_in: 1 hour
 
-.build:
+build:
   stage: build
+  parallel:
+    matrix:
+      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "arm64" }
+      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "amd64" }
   needs:
-    - download
+    - job: download
+      artifacts: true
   image: registry.gitlab.com/jitesoft/dockerfiles/go:latest
   script:
+    - TRIVY_VERSION=$(cat version.txt)
     - apk add --no-cache gcc
     - mkdir -p ${GOPATH}/src/github.com/aquasecurity/trivy
     - tar -xzf trivy.tar.gz --strip-components=1 -C "${GOPATH}/src/github.com/aquasecurity/trivy"
     - cd ${GOPATH}/src/github.com/aquasecurity/trivy
     - go mod download
-    - go build -v -a -ldflags "-s -w -X=main.version=v$(cat version.txt)" ./cmd/trivy
+    - go build -v -a -ldflags "-s -w -X=main.version=v${TRIVY_VERSION}" ./cmd/trivy
     - mv trivy ${CI_PROJECT_DIR}/trivy-${ARCH}
   artifacts:
     paths:
@@ -42,36 +48,21 @@ download:
       - version.txt
     expire_in: 1 hour
 
-build:arm:
-  extends: .build
-  variables:
-    GIT_STRATEGY: "none"
-    GO111MODULE: "on"
-    ARCH: "arm64"
-  tags:
-    - native-arm64
-
-build:amd:
-  extends: .build
-  variables:
-    GIT_STRATEGY: "none"
-    GO111MODULE: "on"
-    ARCH: "amd64"
-  tags:
-    - native-amd64
-
 containerize:
   stage: containerize
   needs:
-    - build:arm
-    - build:amd
+    - job: build
+      artifacts: true
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   script:
     - mkdir -p binaries/contrib
+    - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/Trivy.gitlab-ci.yaml -o binaries/contrib/Trivy.gitlab-ci.yaml
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab.tpl -o binaries/contrib/gitlab.tpl
+    - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/hyml.tpl -o binaries/contrib/html.tpl
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/sarif.tpl -o binaries/contrib/sarif.tpl
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/junit.tpl -o binaries/contrib/junit.tpl
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/asff.tpl -o binaries/contrib/asff.tpl
+    - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab-codequality.tpl -o binaries/contrib/gitlab-codequality.tpl
     - mv trivy-* binaries/
     - mv entrypoint binaries/
     - TAGLIST=$(helper "${CI_REGISTRY_IMAGE},jitesoft/trivy,ghcr.io/jitesoft/trivy" "latest,$(cat version.txt)")
