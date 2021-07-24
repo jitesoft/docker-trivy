@@ -27,8 +27,8 @@ build:
   stage: build
   parallel:
     matrix:
-      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "arm64" }
-      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "amd64" }
+      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "arm64", GOARCH: "arm64" }
+      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "amd64", GOARCH: "amd64" }
   needs:
     - job: download
       artifacts: true
