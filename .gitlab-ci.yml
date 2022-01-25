@@ -2,55 +2,88 @@ include:
   - https://gitlab.com/jitesoft/gitlab-ci-lib/raw/master/Scan/trivy.yml
 
 stages:
-  - download
+  - pre
   - build
   - containerize
-  - scan
+  - post
+
+check:
+  stage: pre
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always
+    - when: never
+  image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
+  script:
+    - touch version.txt
+    - REMOTE_VERSION=$(wget -qO- https://api.github.com/repos/aquasecurity/trivy/releases | jq -r ".[0].name")
+    - LOCAL_VERSION=$(cat version.txt)
+    - REMOTE_VERSION="${REMOTE_VERSION#?}"
+    - |
+      if [ ! -z "${FORCE_BUILD+x}" ] || [ "${REMOTE_VERSION}" != "${LOCAL_VERSION}" ]; then
+        echo "${REMOTE_VERSION} and ${LOCAL_VERSION} differ. Running build."
+        curl -F token=${CI_JOB_TOKEN} -F ref=master -F "variables[VERSION]=${REMOTE_VERSION}" -F "variables[BUILD]=true" https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/trigger/pipeline
+      else
+        echo "${REMOTE_VERSION} and ${LOCAL_VERSION} where equal. Running scan."
+        curl -F token=${CI_JOB_TOKEN} -F ref=master -F "variables[VERSION]=${REMOTE_VERSION}" -F "variables[SCAN]=true" https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/trigger/pipeline
+      fi
+  cache:
+    paths:
+      - version.txt
+    policy: pull
 
 download:
-  stage: download
+  rules:
+    - if: "$BUILD"
+      when: always
+    - when: never
+  stage: pre
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   variables:
     GIT_STRATEGY: none
   script:
-    - apk add --no-cache jq
-    - VERSION=$(wget -qO- https://api.github.com/repos/aquasecurity/trivy/releases | jq -r ".[0].tag_name")
-    - curl -SsL https://github.com/aquasecurity/trivy/archive/${VERSION}.tar.gz -o trivy.tar.gz
-    - echo "${VERSION#?}" > version.txt
+    - curl -SsL https://github.com/aquasecurity/trivy/archive/v${VERSION}.tar.gz -o trivy.tar.gz
   artifacts:
     paths:
-      - version.txt
       - trivy.tar.gz
     expire_in: 1 hour
 
 build:
+  rules:
+    - if: "$BUILD"
+      when: on_success
+    - when: never
   stage: build
   parallel:
     matrix:
-      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "arm64", GOARCH: "arm64" }
-      - { GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "amd64", GOARCH: "amd64" }
+      - { TAG_ARCH: "native-arm64", GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "arm64", GOARCH: "arm64" }
+      - { TAG_ARCH: "native-amd64", GIT_STRATEGY: "none", GO111MODULE: "on", ARCH: "amd64", GOARCH: "amd64" }
   needs:
     - job: download
       artifacts: true
   image: registry.gitlab.com/jitesoft/dockerfiles/go:latest
   script:
-    - TRIVY_VERSION=$(cat version.txt)
     - apk add --no-cache gcc
     - mkdir -p ${GOPATH}/src/github.com/aquasecurity/trivy
     - tar -xzf trivy.tar.gz --strip-components=1 -C "${GOPATH}/src/github.com/aquasecurity/trivy"
     - cd ${GOPATH}/src/github.com/aquasecurity/trivy
     - go mod download
-    - go build -v -a -ldflags "-s -w -X=main.version=v${TRIVY_VERSION}" ./cmd/trivy
+    - go build -v -a -ldflags "-s -w -X=main.version=v${VERSION}" ./cmd/trivy
     - mv trivy ${CI_PROJECT_DIR}/trivy-${ARCH}
   tags:
-    - native-amd64
+    - ${TAG_ARCH}
   artifacts:
     paths:
       - trivy-${ARCH}
-      - version.txt
     expire_in: 1 hour
 
 containerize:
+  rules:
+    - if: "$BUILD"
+      when: on_success
+    - when: never
   stage: containerize
   needs:
     - job: build
@@ -67,15 +100,34 @@ containerize:
     - curl -SsL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/gitlab-codequality.tpl -o binaries/contrib/gitlab-codequality.tpl
     - mv trivy-* binaries/
     - mv entrypoint binaries/
-    - TAGLIST=$(helper "${CI_REGISTRY_IMAGE},jitesoft/trivy,ghcr.io/jitesoft/trivy" "latest,$(cat version.txt)")
-    - docker buildx build ${TAGLIST} --progress=plain --platform=linux/amd64,linux/arm64 --build-arg VERSION=$(cat version.txt) --push .
+    - TAGLIST=$(helper "${CI_REGISTRY_IMAGE},jitesoft/trivy,ghcr.io/jitesoft/trivy" "latest,${VERSION}")
+    - docker buildx build ${TAGLIST} --progress=plain --platform=linux/amd64,linux/arm64 --build-arg BUILD_TIME="$(date -Iseconds)"  --build-arg VERSION="${VERSION}" --push .
   tags:
     - buildx
     - protected
 
+sign:
+  extends: .sign
+  tags: [ jitesoft, protected, buildx ]
+  stage: post
+  variables:
+    COSIGN_ANNOTATIONS: "-a sig=jitesoft-bot"
+    SIGN_TAGS: "${VERSION},latest"
+    SIGN_IMAGES: "jitesoft/trivy,${CI_REGISTRY_IMAGE},ghcr.io/jitesoft/trivy"
+  rules:
+    - if: "$BUILD"
+      when: on_success
+    - when: never
+
 scan:
+  rules:
+    - if: "$SCAN"
+      when: always
+    - if: "$BUILD"
+      when: on_success
+    - when: never
   tags: [ protected, jitesoft ]
-  stage: scan
+  stage: post
   extends: .container_scanning
   before_script:
     - apk add --no-cache wget grep
@@ -84,3 +136,16 @@ scan:
     - trivy --version
   variables:
     GIT_STRATEGY: none
+
+create-cache:
+  stage: post
+  script:
+    - echo "${VERSION}" > version.txt
+  cache:
+    paths:
+      - version.txt
+    policy: push
+  rules:
+    - if: "$BUILD"
+      when: on_success
+    - when: never
